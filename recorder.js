@@ -18,6 +18,7 @@ class TimerRecorder {
         this.recordedChunks = [];
         this.isRecording = false;
         this.videoBlob = null;
+        this.autoDownload = false;
         this.previewCtx = null;
         this.lastTimerValue = "00:00:00";
         this.frameCount = 0;
@@ -240,6 +241,12 @@ class TimerRecorder {
             this.downloadBtn.disabled = false;
             this.recordingStatus.textContent = 'Recording complete. Ready to download.';
             this.recordingStatus.classList.remove('recording');
+            
+            // Auto download if requested
+            if (this.autoDownload) {
+                // Small delay before triggering download to ensure processing is complete
+                setTimeout(() => this.downloadVideo(), 300);
+            }
         };
         
         // Start recording - use smaller timeslice (100ms) for more accurate timing
@@ -259,15 +266,23 @@ class TimerRecorder {
         requestAnimationFrame(() => this.renderLoop());
     }
     
-    stopRecording() {
-        if (!this.isRecording) return;
+    stopRecording(autoDownload = false) {
+        if (!this.isRunning) return;
         
         this.isRecording = false;
-        this.mediaRecorder.stop();
+        this.autoDownload = autoDownload;
         
-        // Update UI
-        this.recordBtn.disabled = false;
-        this.stopRecordBtn.disabled = true;
+        // Make sure we record one final frame with the final timer value
+        this.drawTimerToCanvas();
+        
+        // Small delay to ensure the final frame is captured
+        setTimeout(() => {
+            this.mediaRecorder.stop();
+            
+            // Update UI
+            this.recordBtn.disabled = false;
+            this.stopRecordBtn.disabled = true;
+        }, 200);
     }
     
     downloadVideo() {
@@ -289,7 +304,38 @@ class TimerRecorder {
         setTimeout(() => {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+            
+            // Show success message
+            this.showDownloadSuccess();
         }, 100);
+    }
+    
+    // Add method to create a custom success message
+    showDownloadSuccess() {
+        // Create success message element
+        const successMsg = document.createElement('div');
+        successMsg.className = 'download-success-message';
+        successMsg.innerHTML = `
+            <div class="success-content">
+                <div class="success-icon">✓</div>
+                <div class="success-text">Download successful!</div>
+                <button class="close-btn">OK</button>
+            </div>
+        `;
+        document.body.appendChild(successMsg);
+        
+        // Add close button functionality
+        const closeBtn = successMsg.querySelector('.close-btn');
+        closeBtn.addEventListener('click', () => {
+            document.body.removeChild(successMsg);
+        });
+        
+        // Auto-remove after 4 seconds
+        setTimeout(() => {
+            if (document.body.contains(successMsg)) {
+                document.body.removeChild(successMsg);
+            }
+        }, 4000);
     }
     
     resetRecordingUI() {

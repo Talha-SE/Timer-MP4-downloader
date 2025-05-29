@@ -18,5 +18,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('minutes').value = Config.defaultTimer.minutes;
     }
     
+    // Update timer display with initial values
+    window.timer.updateInitialDisplay();
+    
+    // Add input event listeners to update display when timer inputs change
+    document.getElementById('hours').addEventListener('input', () => window.timer.updateInitialDisplay());
+    document.getElementById('minutes').addEventListener('input', () => window.timer.updateInitialDisplay());
+    document.getElementById('seconds').addEventListener('input', () => window.timer.updateInitialDisplay());
+    
     console.log('Timer app initialized');
 });

@@ -16,13 +16,22 @@ class Timer {
         
         // Initialize
         this.initEventListeners();
-        this.updateTimerDisplay();
     }
     
     initEventListeners() {
         this.startBtn.addEventListener('click', () => this.startTimer());
         this.pauseBtn.addEventListener('click', () => this.pauseTimer());
         this.resetBtn.addEventListener('click', () => this.resetTimer());
+    }
+    
+    updateInitialDisplay() {
+        // Get time from inputs
+        const hours = parseInt(this.hoursInput.value) || 0;
+        const minutes = parseInt(this.minutesInput.value) || 0;
+        const seconds = parseInt(this.secondsInput.value) || 0;
+        
+        // Update display with initial values
+        this.timerDisplay.textContent = `${Utils.padZero(hours)}:${Utils.padZero(minutes)}:${Utils.padZero(seconds)}`;
     }
     
     updateTimerDisplay() {
@@ -56,14 +65,25 @@ class Timer {
             this.updateTimerDisplay();
             
             if (this.totalSeconds <= 0) {
-                this.stopTimer();
-                alert("Timer finished!");
+                // Ensure display shows 00:00:00
+                this.totalSeconds = 0;
+                this.updateTimerDisplay();
                 
-                // Stop recording if it's in progress
-                const recorder = document.querySelector('body').__recorder;
-                if (recorder && recorder.isRecording) {
-                    recorder.stopRecording();
-                }
+                // Clear interval first to prevent any further ticks
+                clearInterval(this.timer);
+                
+                // Set a short timeout to ensure the 00:00:00 gets recorded
+                setTimeout(() => {
+                    this.isRunning = false;
+                    this.startBtn.disabled = false;
+                    this.pauseBtn.disabled = true;
+                    
+                    // Stop recording if it's in progress and trigger download
+                    const recorder = document.querySelector('body').__recorder;
+                    if (recorder && recorder.isRecording) {
+                        recorder.stopRecording(true); // Pass true to auto-download when complete
+                    }
+                }, 500); // Half-second delay to ensure 00:00:00 is captured
             }
         }, 1000);
     }
@@ -81,21 +101,24 @@ class Timer {
         clearInterval(this.timer);
         this.totalSeconds = 0;
         this.isRunning = false;
-        this.updateTimerDisplay();
-        this.startBtn.disabled = false;
-        this.pauseBtn.disabled = true;
         
         // Clear inputs
         this.hoursInput.value = 0;
         this.minutesInput.value = 0;
         this.secondsInput.value = 0;
+        
+        // Update display to show 00:00:00
+        this.timerDisplay.textContent = "00:00:00";
+        
+        this.startBtn.disabled = false;
+        this.pauseBtn.disabled = true;
     }
     
     stopTimer() {
         clearInterval(this.timer);
         this.totalSeconds = 0;
+        this.updateTimerDisplay(); // Ensure display shows 00:00:00
         this.isRunning = false;
-        this.updateTimerDisplay();
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
     }
