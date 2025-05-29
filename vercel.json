@@ -2,11 +2,17 @@
   "version": 2,
   "name": "customizable-timer",
   "builds": [
+    { "src": "server/index.js", "use": "@vercel/node" },
     { "src": "*.html", "use": "@vercel/static" },
     { "src": "*.css", "use": "@vercel/static" },
     { "src": "*.js", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/recording/(.*)", "dest": "/server/index.js" },
+    { "src": "/recordings/(.*)", "dest": "/server/index.js" },
     { "src": "/(.*)", "dest": "/$1" }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
