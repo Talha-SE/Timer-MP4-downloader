@@ -20,3 +20,7 @@ The app uses only client-side code (HTML, CSS, and JavaScript), so it will work 
 - Video recording of the timer with customizable quality
 - Transparent background option for recordings
 - Live preview of recording
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

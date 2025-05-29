@@ -1,3 +1,9 @@
+/*
+ * Creative Commons Attribution 4.0 International License (CC BY 4.0)
+ * Copyright (c) 2025 Talha
+ * See LICENSE file for details
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize timer and customizer
     window.timer = new Timer();
