@@ -14,22 +14,14 @@ class TimerRecorder {
         this.canvas = document.getElementById('recording-canvas');
         
         // Recording state
+        this.mediaRecorder = null;
+        this.recordedChunks = [];
         this.isRecording = false;
-        this.sessionId = null;
-        this.videoUrl = null;
+        this.videoBlob = null;
         this.autoDownload = false;
         this.previewCtx = null;
         this.lastTimerValue = "00:00:00";
         this.frameCount = 0;
-        this.frameInterval = null;
-        
-        // API endpoints
-        this.apiEndpoints = {
-            start: '/api/recording/start',
-            frame: '/api/recording/frame',
-            stop: '/api/recording/stop',
-            download: '/api/recording/download'
-        };
         
         // Store reference to this recorder instance for global access
         document.querySelector('body').__recorder = this;
@@ -143,7 +135,7 @@ class TimerRecorder {
         const timerStyle = window.getComputedStyle(this.timerDisplay);
         const timerText = this.timerDisplay.textContent;
         
-        // Track if the timer value has changed
+        // Track if the timer value has changed (for forced keyframes)
         const timerChanged = this.lastTimerValue !== timerText;
         this.lastTimerValue = timerText;
         
@@ -174,12 +166,24 @@ class TimerRecorder {
             this.ctx.arc(dotSize * 2, dotSize * 2, dotSize, 0, Math.PI * 2);
             this.ctx.fill();
             this.frameCount++;
+            
+            // Force a keyframe when the timer changes
+            if (timerChanged && this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                try {
+                    // Request a keyframe to ensure precise timing
+                    this.mediaRecorder.requestData();
+                } catch (e) {
+                    // Some browsers may not support this
+                    console.log('Could not request keyframe');
+                }
+            }
         }
     }
     
-    async startRecording() {
+    startRecording() {
         if (this.isRecording) return;
         
+        this.recordedChunks = [];
         this.isRecording = true;
         this.frameCount = 0;
         
@@ -195,90 +199,60 @@ class TimerRecorder {
             window.timer.startTimer();
         }
         
+        // Setup canvas stream with higher framerate (60 FPS) for smoother timer
+        const stream = this.canvas.captureStream(60);
+        
+        // Create media recorder with appropriate settings based on transparency
+        let options;
+        
+        if (this.transparentBg.checked) {
+            // For transparency, we need to use WebM with VP8/VP9 codec
+            options = { mimeType: 'video/webm;codecs=vp9' };
+        } else {
+            // For non-transparent, we can use more compatible formats
+            options = { mimeType: 'video/webm;codecs=vp9' }; // Default to WebM
+        }
+        
         try {
-            // Get canvas dimensions from quality setting
-            const quality = this.videoQuality.value;
-            const dimensions = this.getCanvasDimensions(quality);
-            
-            // Start recording on server
-            const response = await fetch(this.apiEndpoints.start, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    width: dimensions.width,
-                    height: dimensions.height,
-                    transparentBg: this.transparentBg.checked,
-                    quality: 'medium' // Can be configurable
-                }),
-            });
-            
-            const data = await response.json();
-            
-            if (!data.success) {
-                throw new Error(data.error || 'Failed to start recording on server');
-            }
-            
-            this.sessionId = data.sessionId;
-            
-            // Start sending frames to the server
-            this.startFrameCapture();
-            
-            // Start the canvas rendering loop
-            this.renderLoop();
-        } catch (error) {
-            console.error('Error starting recording:', error);
-            this.recordingStatus.textContent = 'Failed to start recording: ' + error.message;
-            this.resetRecordingUI();
-        }
-    }
-    
-    getCanvasDimensions(quality) {
-        switch(quality) {
-            case '720p': return { width: 1280, height: 720 };
-            case '1080p': return { width: 1920, height: 1080 };
-            case '2k': return { width: 2560, height: 1440 };
-            case '4k': return { width: 3840, height: 2160 };
-            default: return { width: 1280, height: 720 };
-        }
-    }
-    
-    startFrameCapture() {
-        // Capture frames at a consistent rate (e.g., 10 FPS for efficiency)
-        const FRAME_RATE = 10;
-        this.frameInterval = setInterval(() => {
-            if (!this.isRecording || !this.sessionId) {
-                clearInterval(this.frameInterval);
+            this.mediaRecorder = new MediaRecorder(stream, options);
+        } catch (e) {
+            // Fallback if vp9 is not supported
+            try {
+                this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            } catch (e) {
+                console.error('MediaRecorder not supported by this browser', e);
+                this.recordingStatus.textContent = 'Recording not supported by your browser';
+                this.resetRecordingUI();
                 return;
             }
-            
-            this.sendFrameToServer();
-        }, 1000 / FRAME_RATE);
-    }
-    
-    async sendFrameToServer() {
-        try {
-            // Draw the current state to the canvas
-            this.drawTimerToCanvas();
-            
-            // Get frame as base64 data URL
-            const frameData = this.canvas.toDataURL('image/png');
-            
-            // Send frame to server
-            await fetch(this.apiEndpoints.frame, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sessionId: this.sessionId,
-                    frameData
-                }),
-            });
-        } catch (error) {
-            console.error('Error sending frame:', error);
         }
+        
+        // Set up media recorder events
+        this.mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                this.recordedChunks.push(e.data);
+            }
+        };
+        
+        this.mediaRecorder.onstop = () => {
+            // Create appropriate blob type based on transparency
+            const mimeType = this.transparentBg.checked ? 'video/webm' : 'video/mp4';
+            this.videoBlob = new Blob(this.recordedChunks, { type: mimeType });
+            this.downloadBtn.disabled = false;
+            this.recordingStatus.textContent = 'Recording complete. Ready to download.';
+            this.recordingStatus.classList.remove('recording');
+            
+            // Auto download if requested
+            if (this.autoDownload) {
+                this.downloadVideo();
+            }
+        };
+        
+        // Start recording - use smaller timeslice (100ms) for more accurate timing
+        this.mediaRecorder.start(100);
+        
+        // Start the canvas rendering loop
+        this.renderLoop();
     }
     
     renderLoop() {
@@ -291,72 +265,27 @@ class TimerRecorder {
         requestAnimationFrame(() => this.renderLoop());
     }
     
-    async stopRecording(autoDownload = false) {
+    stopRecording(autoDownload = false) {
         if (!this.isRecording) return;
         
         this.isRecording = false;
         this.autoDownload = autoDownload;
+        this.mediaRecorder.stop();
         
-        // Clear frame capture interval
-        if (this.frameInterval) {
-            clearInterval(this.frameInterval);
-            this.frameInterval = null;
-        }
-        
-        // Update UI to show processing state
-        this.recordingStatus.textContent = 'Processing video on server...';
-        
-        try {
-            // Tell server to stop recording and generate video
-            const response = await fetch(this.apiEndpoints.stop, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sessionId: this.sessionId
-                }),
-            });
-            
-            const data = await response.json();
-            
-            if (!data.success) {
-                throw new Error(data.error || 'Failed to process video on server');
-            }
-            
-            // Store video URL for download
-            this.videoUrl = data.videoUrl;
-            
-            // Update UI
-            this.recordBtn.disabled = false;
-            this.stopRecordBtn.disabled = true;
-            this.downloadBtn.disabled = false;
-            this.recordingStatus.textContent = 'Recording complete. Ready to download.';
-            this.recordingStatus.classList.remove('recording');
-            
-            // Auto download if requested
-            if (this.autoDownload) {
-                this.downloadVideo();
-            }
-        } catch (error) {
-            console.error('Error stopping recording:', error);
-            this.recordingStatus.textContent = 'Error processing video: ' + error.message;
-            this.resetRecordingUI();
-        }
+        // Update UI
+        this.recordBtn.disabled = false;
+        this.stopRecordBtn.disabled = true;
     }
     
     downloadVideo() {
-        if (!this.videoUrl) return;
+        if (!this.videoBlob) return;
         
-        // Add token for download authorization
-        const downloadUrl = `${this.videoUrl}?token=valid-download-token`;
-        
-        // Create download link
+        const url = URL.createObjectURL(this.videoBlob);
         const a = document.createElement('a');
         a.style.display = 'none';
-        a.href = downloadUrl;
+        a.href = url;
         
-        // Set filename based on current date
+        // Set extension based on transparency
         const extension = this.transparentBg.checked ? 'webm' : 'mp4';
         a.download = `timer-${new Date().toISOString()}.${extension}`;
         
@@ -366,6 +295,7 @@ class TimerRecorder {
         // Clean up
         setTimeout(() => {
             document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
             
             // Show success message
             this.showDownloadSuccess();

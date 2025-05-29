@@ -109,11 +109,5 @@ class Timer {
         this.updateTimerDisplay();
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
-        
-        // Stop recording if it's in progress
-        const recorder = document.querySelector('body').__recorder;
-        if (recorder && recorder.isRecording) {
-            recorder.stopRecording(true); // Pass true to auto-download when complete
-        }
     }
 }
