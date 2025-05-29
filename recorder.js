@@ -244,8 +244,7 @@ class TimerRecorder {
             
             // Auto download if requested
             if (this.autoDownload) {
-                // Small delay before triggering download to ensure processing is complete
-                setTimeout(() => this.downloadVideo(), 300);
+                this.downloadVideo();
             }
         };
         
@@ -267,22 +266,15 @@ class TimerRecorder {
     }
     
     stopRecording(autoDownload = false) {
-        if (!this.isRunning) return;
+        if (!this.isRecording) return;
         
         this.isRecording = false;
         this.autoDownload = autoDownload;
+        this.mediaRecorder.stop();
         
-        // Make sure we record one final frame with the final timer value
-        this.drawTimerToCanvas();
-        
-        // Small delay to ensure the final frame is captured
-        setTimeout(() => {
-            this.mediaRecorder.stop();
-            
-            // Update UI
-            this.recordBtn.disabled = false;
-            this.stopRecordBtn.disabled = true;
-        }, 200);
+        // Update UI
+        this.recordBtn.disabled = false;
+        this.stopRecordBtn.disabled = true;
     }
     
     downloadVideo() {

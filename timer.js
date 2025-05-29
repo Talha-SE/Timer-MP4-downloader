@@ -64,26 +64,14 @@ class Timer {
             this.totalSeconds--;
             this.updateTimerDisplay();
             
-            if (this.totalSeconds <= 0) {
-                // Ensure display shows 00:00:00
-                this.totalSeconds = 0;
-                this.updateTimerDisplay();
+            if (this.totalSeconds < 0) {
+                this.stopTimer();
                 
-                // Clear interval first to prevent any further ticks
-                clearInterval(this.timer);
-                
-                // Set a short timeout to ensure the 00:00:00 gets recorded
-                setTimeout(() => {
-                    this.isRunning = false;
-                    this.startBtn.disabled = false;
-                    this.pauseBtn.disabled = true;
-                    
-                    // Stop recording if it's in progress and trigger download
-                    const recorder = document.querySelector('body').__recorder;
-                    if (recorder && recorder.isRecording) {
-                        recorder.stopRecording(true); // Pass true to auto-download when complete
-                    }
-                }, 500); // Half-second delay to ensure 00:00:00 is captured
+                // Stop recording if it's in progress and trigger download
+                const recorder = document.querySelector('body').__recorder;
+                if (recorder && recorder.isRecording) {
+                    recorder.stopRecording(true); // Pass true to auto-download when complete
+                }
             }
         }, 1000);
     }
@@ -117,8 +105,8 @@ class Timer {
     stopTimer() {
         clearInterval(this.timer);
         this.totalSeconds = 0;
-        this.updateTimerDisplay(); // Ensure display shows 00:00:00
         this.isRunning = false;
+        this.updateTimerDisplay();
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
     }
