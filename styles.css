@@ -1,0 +1,197 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    transition: all 0.3s ease;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.timer-display {
+    font-size: 5rem;
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.timer-input, .customization, .controls {
+    margin-bottom: 30px;
+}
+
+.input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+label {
+    margin-right: 10px;
+    flex: 1;
+}
+
+input[type="number"], select {
+    width: 100px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+input[type="color"] {
+    width: 100px;
+    height: 40px;
+    padding: 2px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Add these new styles for the video options section */
+
+.video-options {
+    margin-bottom: 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: var(--secondary-bg);
+}
+
+.record-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.record-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.stop-record-btn {
+    background-color: #607d8b;
+    color: white;
+}
+
+.download-btn {
+    background-color: #2196f3;
+    color: white;
+}
+
+.recording-status {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    height: 20px;
+}
+
+.recording {
+    animation: blink 1s infinite;
+    color: #f44336;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Add these new styles for the transparent background option */
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.note {
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* Add these styles for the preview functionality */
+
+.preview-container {
+    margin-bottom: 15px;
+}
+
+.preview-area {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+    border: 1px dashed #ccc;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.preview-area.active {
+    display: flex;
+}
+
+.preview-label {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: #666;
+    font-weight: bold;
+}
+
+.preview-canvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 600px) {
+    .timer-display {
+        font-size: 3rem;
+    }
+    
+    .input-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    input[type="number"], select, input[type="color"] {
+        width: 100%;
+        margin-top: 5px;
+    }
+}

@@ -1,0 +1,68 @@
+/* Light Theme */
+.theme-light {
+    --primary-bg: #ffffff;
+    --secondary-bg: #f4f4f4;
+    --text-color: #333333;
+    --button-primary: #4CAF50;
+    --button-secondary: #ff9800;
+    --button-danger: #f44336;
+}
+
+/* Dark Theme */
+.theme-dark {
+    --primary-bg: #2c2c2c;
+    --secondary-bg: #1a1a1a;
+    --text-color: #f0f0f0;
+    --button-primary: #388e3c;
+    --button-secondary: #f57c00;
+    --button-danger: #d32f2f;
+}
+
+/* Ocean Theme */
+.theme-ocean {
+    --primary-bg: #e0f7fa;
+    --secondary-bg: #b2ebf2;
+    --text-color: #006064;
+    --button-primary: #00acc1;
+    --button-secondary: #0288d1;
+    --button-danger: #01579b;
+}
+
+/* Sunset Theme */
+.theme-sunset {
+    --primary-bg: #fff3e0;
+    --secondary-bg: #ffe0b2;
+    --text-color: #e65100;
+    --button-primary: #ff9800;
+    --button-secondary: #ff5722;
+    --button-danger: #bf360c;
+}
+
+/* Apply theme variables */
+body {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+.container {
+    background-color: var(--primary-bg);
+}
+
+.timer-display {
+    background-color: var(--secondary-bg);
+}
+
+#start-btn {
+    background-color: var(--button-primary);
+    color: white;
+}
+
+#pause-btn {
+    background-color: var(--button-secondary);
+    color: white;
+}
+
+#reset-btn {
+    background-color: var(--button-danger);
+    color: white;
+}
